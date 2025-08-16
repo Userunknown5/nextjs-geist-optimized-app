@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Farmer {
+  id          String   @id @default(uuid())
+  name        String
+  village     String
+  contact     String
+  bankAcc     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  milkRecords MilkRecord[]
+  feedRecords FeedRecord[]
+
+  @@map("farmers")
+}
+
+model MilkRecord {
+  id        String   @id @default(uuid())
+  farmerId  String
+  date      DateTime
+  shift     Shift
+  quantity  Float    // in liters
+  fat       Float    // fat percentage
+  degree    Float    // degree/quality
+  rate      Float    // rate per liter
+  amount    Float    // auto-calculated: quantity * rate
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  farmer    Farmer   @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  @@map("milk_records")
+}
+
+model FeedRecord {
+  id        String      @id @default(uuid())
+  farmerId  String
+  date      DateTime
+  feedType  String
+  quantity  Float       // in kg
+  price     Float       // total price
+  status    PaymentStatus @default(PENDING)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  
+  farmer    Farmer      @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  @@map("feed_records")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum Shift {
+  MORNING
+  EVENING
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+}
